@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Test_Bot/src/commands"
 	"flag"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
@@ -10,36 +11,34 @@ import (
 	"syscall"
 )
 
-const version = "0.0.1v"
-var session, _ = discordgo.New()
+const version = "0.0.2v"
+
+var Token string
 
 func init() {
-	flag.StringVar(&session.Token, "token", "", "DISCORD_TOKEN")
+	flag.StringVar(&Token, "token", "", "DISCORD_TOKEN")
 	flag.Parse()
 }
 
 func main() {
-	var err error
-
 	log.Println("Version:", version)
+	session, err := discordgo.New("Bot " + Token)
 
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	if session.Token == "" {
+	if Token == "" {
 		fmt.Println("Token: null")
 		log.Fatal(err)
 
 		return
 	} else {
-		fmt.Println("Token:", session.Token)
+		fmt.Println("Token:", Token)
 	}
 
 	log.Println("get_token: Get Token access complete!")
-
-	session.AddHandler(sendTestMessage)
 
 	err = session.Open()
 	if err != nil {
@@ -48,6 +47,8 @@ func main() {
 	}
 
 	session.UpdateGameStatus(0, "Bot Runner")
+	session.AddHandler(commands.PingPongListener)
+	session.Identify.Intents = discordgo.IntentsGuildMessages
 
 	log.Println("authenticate: Connect complete!")
 	log.Println("bot_manager: Bot is now running. Press CTRL-C to exit.")
@@ -58,14 +59,4 @@ func main() {
 	<-sc
 
 	session.Close()
-}
-
-func sendTestMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
-	if message.Author.ID == session.State.User.ID {
-		return
-	}
-
-	if message.Content == "!test" {
-		session.ChannelMessageSend(message.ChannelID, "Hello, World!")
-	}
 }
